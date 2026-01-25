@@ -30,6 +30,8 @@ core::IncrementTimer<int64_t> timer([]() -> core::Result<int64_t> {
 
 char *str;
 
+binds::vex5::motor::V5MotorController motor1(motor::MotorInfo(0, motorDistance, wheelR, motorUseSpeedRange, motorInterfaceAngularSpeedRange));
+
 void setup() {
     
     pinMode(LED_BUILTIN, OUTPUT);
@@ -38,6 +40,8 @@ void setup() {
     
     Serial.begin(9600);
     delay(100);
+    // Serial.println(motorInterfaceAngularSpeedRange.lowest);
+    // Serial.println(motorInterfaceAngularSpeedRange.highest);
 
     Serial.println("Initialized serial\n\nInitializing timer");
     
@@ -73,15 +77,16 @@ void setup() {
     delay(100);
     
     Serial.println("Initializing platform controller shield");
-    if (Vex5.begin(500000, -1)) while (true) Serial.println("Failed to initialize VEX5 motor shield");
+    Vex5.begin();
+    motor1.init(VEX5_PORT_3);
+    
     
     Serial.println("Initialized platform controller shield\n\n");
     delay(100);
     
     Serial.println("Initializing platform controller");
     er = plat.init(core::Array<VEX5_PORT_t>({(VEX5_PORT_t)1, (VEX5_PORT_t)2, (VEX5_PORT_t)3, (VEX5_PORT_t)4}));
-    
-    if (er) while (true) Serial.println(er.msg.c_str());
+    // if (er) while (true) Serial.println(er.msg.c_str());
     
     Serial.println("Initialized platform controller");
     delay(100);
@@ -95,75 +100,66 @@ void setup() {
     
 }
 
-// void go(double angle, double speed) {
-//     auto speeds = platform::calculators::calculatePlatformLinearSpeeds(config, angle, speed);
-//     if(speeds) {
-//         Serial.println(("Ooops, something went wrong in calculating speeds for linear movement of the platform: " + speeds.error().msg).c_str());
-//         return;
-//     }
+void go(double angle, double speed, double angularSpeed = 0) {
+    auto speeds = platform::calculators::calculatePlatformSpeeds(config, angle, speed);
+    if(speeds) {
+        Serial.println(("Ooops, something went wrong in calculating speeds for linear movement of the platform: " + speeds.error().msg).c_str());
+        return;
+    }
     
-//     Serial.print("1: ");
-//     Serial.print(speeds()[0]);
-//     Serial.print("; 2: ");
-//     Serial.print(speeds()[1]);
-//     Serial.print("; 3: ");
-//     Serial.print(speeds()[2]);
-//     Serial.print("; 4: ");
-//     Serial.println(speeds()[3]);
+    auto err = plat.setSpeeds(speeds());
     
-//     auto err = plat.setSpeeds(speeds());
-    
-//     if(err.errcode != util::ErrorCode::success) {
-//         Serial.println(("Ooops, something went wrong in applying speeds to motors for linear movement of the platform: " + err.msg).c_str());
-//         Serial.println(err.msg.c_str());
-//     }
-// }
+    if(err) {
+        Serial.println(("Ooops, something went wrong in applying speeds to motors for linear movement of the platform: " + err.msg).c_str());
+    }
+}
 
-// void move(double angle, double speed, ull_t delayMs) {
-//     go(angle, speed);
-//     delay(delayMs);
-// }
+void move(double angle, double speed, ull_t delayMs) {
+    go(angle, speed);
+    delay(delayMs);
+}
 
-// double speed = 200;
-// ull_t sectionTime = 1000;
+double speed = 1000;
+ull_t sectionTime = 1000;
 
 void loop() {      
-    // move(0, speed, sectionTime);
-    // move(90, speed, sectionTime);
-    // move(180, speed, sectionTime);
-    // move(-90, speed, sectionTime);
-    // move(0, speed, sectionTime);
-    // move(45, speed, sectionTime);
-    // move(90, speed, sectionTime);
-    // move(135, speed, sectionTime);
-    // move(180, speed, sectionTime);
-    // move(-135, speed, sectionTime);
-    // move(-90, speed, sectionTime);
-    // move(-45, speed, sectionTime);
+    // motor1.setSpeed(2000);
+    // delay(sectionTime);
+    // motor1.setSpeed(-2000);
+    // delay(sectionTime);
     
-    const auto info = mpu.getGyroData();
+    move(0, speed, sectionTime);
+    move(45, speed, sectionTime);
+    move(90, speed, sectionTime);
+    move(135, speed, sectionTime);
+    move(180, speed, sectionTime);
+    move(-135, speed, sectionTime);
+    move(-90, speed, sectionTime);
+    move(-45, speed, sectionTime);
+    
+//     const auto info = mpu.getGyroData();
 
-    if (info) {
-        sprintf(str, "Shit happened: %s\n", info.error().msg.c_str());
-        goto usual;
-    }
+//     if (info) {
+//         sprintf(str, "Shit happened: %s\n", info.error().msg.c_str());
+//         goto usual;
+//     }
 
-    sprintf(str, "[%d %d ms]: speedX = %s;\t speedY = %s;\t speedZ = %s;\t yaw = %s;\t pitch = %s;\t roll = %s\n",
-        static_cast<size_t>(timer.getTime()() / 1000),
-        static_cast<size_t>(timer.getTime()() % 1000),
-        String(int(info().speed[0])).c_str(),
-        String(int(info().speed[1])).c_str(),
-        String(int(info().speed[2])).c_str(),
-        String(int(info().ypr.yaw)).c_str(),
-        String(int(info().ypr.pitch)).c_str(),
-        String(int(info().ypr.roll)).c_str()
-    );
+//     sprintf(str, "[%d %d ms]: speedX = %s;\t speedY = %s;\t speedZ = %s;\t yaw = %s;\t pitch = %s;\t roll = %s\n",
+//         static_cast<size_t>(timer.getTime()() / 1000),
+//         static_cast<size_t>(timer.getTime()() % 1000),
+//         String(int(info().speed[0])).c_str(),
+//         String(int(info().speed[1])).c_str(),
+//         String(int(info().speed[2])).c_str(),
+//         String(int(info().ypr.yaw)).c_str(),
+//         String(int(info().ypr.pitch)).c_str(),
+//         String(int(info().ypr.roll)).c_str()
+//     );
 
 
-usual:
-    ++timer;
-    mpu.update(nullptr);
+// usual:
+//     ++timer;
+//     mpu.update(nullptr);
 
-    Serial.print(str);
+//     Serial.print(str);
 
 }

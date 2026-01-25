@@ -17,13 +17,15 @@ protected:
     Vex5_Motor motor;
     
     [[nodiscard]] virtual core::Error setSpeedRaw(vislib::motor::Speed speed) noexcept override {
-        if(motor.setSpeed(speed) == -1) return failedMotorConnectionError();
-        return core::Error();
+        // if(motor.setSpeed(speed) == -1) return failedMotorConnectionError();
+        motor.setSpeed(speed);
+        return {};
     }
     
     [[nodiscard]] virtual vislib::core::Result<vislib::motor::Speed> getSpeedRaw() const noexcept override {
         int16_t speed;
-        if(static_cast<Vex5_Motor>(motor).getSpeed(speed) == -1) return failedMotorConnectionError();
+        // if(static_cast<Vex5_Motor>(motor).getSpeed(speed) == -1) return failedMotorConnectionError();
+        static_cast<Vex5_Motor>(motor).getSpeed(speed);
         return static_cast<vislib::motor::Speed>(speed);
     }
     
@@ -39,8 +41,9 @@ public:
     [[nodiscard]] virtual core::Error init(VEX5_PORT_t port) noexcept override {
         if (port < 1 || port > 12) 
             return {core::ErrorCode::invalidArgument, "Cannot initialize Vex5 motor controller for motor with port out of range [1, 12]"};
-        if (motor.begin(port) == -1) 
-            return failedMotorConnectionError();
+        // if (motor.begin(port) == -1) 
+        //     return failedMotorConnectionError();
+        motor.begin(port);
         return core::ErrorCode::success;
     }
     
