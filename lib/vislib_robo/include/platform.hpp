@@ -160,12 +160,13 @@ template<typename TimeType> class GyroPidCalculator {
 public:
     PIDRegulator<double, TimeType>& pid;
     core::UniquePtr<gyro::YawGetter<double>> getter;
+    PlatformMotorConfig config;
 
-    GyroPidCalculator(const PIDRegulator<TimeType>& pid, core::UniquePtr<gyro::YawGetter<double>>&& getter) noexcept : pid(pid), getter(core::move(getter)) { }
+    GyroPidCalculator(const PIDRegulator<TimeType>& pid, core::UniquePtr<gyro::YawGetter<double>>&& getter, const PlatformMotorConfig& config) noexcept
+    : pid(pid), getter(core::move(getter)), config(config) { }
 
     core::Result<PlatformMotorSpeeds> calculateSpeeds(
         TimeType time,
-        const PlatformMotorConfig& config,
         const motor::Speed& speed,
         const double speedK = 1,
         const double angularSpeed = 0
