@@ -9,6 +9,7 @@
 #include "callable.hpp"
 #include "abstract.hpp"
 #include "memory.hpp"
+#include "angle.hpp"
 
 namespace vislib::core {
 

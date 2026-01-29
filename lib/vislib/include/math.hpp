@@ -6,6 +6,7 @@
 #include "errordef.hpp"
 #include "abstract.hpp"
 #include "exception.hpp"
+#include "angle.hpp"
 
 namespace vislib::core {
 
