@@ -6,13 +6,13 @@ namespace vislib::core {
 
 template <typename T = double, typename O = double> class Angle {
 protected:
-    T value;
+    T value{};
     
 public:
     
     enum class CastType {
-        radians,
-        degrees
+        degrees,
+        radians
     };
     
     CastType castType = CastType::degrees;
@@ -24,13 +24,29 @@ public:
         return angle;
     }
     
+    static Angle fromDegrees(const T& value) {
+        return Angle(fixDegrees(value));
+    }
+    
+    static Angle fromRadians(const T& value) {
+        return Angle(fixDegrees(rad2Deg(value)));
+    }
+    
+    static Angle fromDeg(const T& value) {
+        return Angle(fixDegrees(value));
+    }
+    
+    static Angle fromRad(const T& value) {
+        return Angle(fixDegrees(rad2Deg(value)));
+    }
+    
     Angle(const T& value) : value(fixDegrees(value)) {}
     
+    Angle() = default;
     Angle(const Angle&) = default;
     Angle(Angle&&) = default;
     Angle& operator=(const Angle&) = default;
     Angle& operator=(Angle&&) = default;
-    
     ~Angle() = default;
     
     inline void setDegrees(const T& value) {

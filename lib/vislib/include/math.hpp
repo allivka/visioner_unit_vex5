@@ -66,6 +66,23 @@ inline double sinDegrees(double angle) noexcept {
     return sin(angle * M_PI / 180.0);
 }
 
+inline double tanDegrees(double angle) noexcept {
+    return tan(angle * M_PI / 180.0);
+}
+
+template <typename T, typename O> inline double cosF(const Angle<T, O>& angle) noexcept {
+    return cos(angle.radians());
+}
+
+template <typename T, typename O> inline double sinF(const Angle<T, O>& angle) noexcept {
+    return sin(angle.radians());
+}
+
+template <typename T, typename O> inline double tanF(const Angle<T, O>& angle) noexcept {
+    return tan(angle.radians());
+}
+
+
 template <typename T> inline constexpr T deg2Rad(T angle) noexcept(numberNoexcept<T>()) {
     return angle * M_PI / 180.0;
 }
