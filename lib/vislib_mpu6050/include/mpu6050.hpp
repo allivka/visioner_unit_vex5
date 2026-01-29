@@ -12,7 +12,7 @@ constexpr double defaultAccelerationDivider = 16384.0;
 
 
 
-class GyroscopeBase : public gyro::UltimateGyroGetter<double, size_t, double, nullptr_t>, public MPU6050 {
+class GyroscopeBase : public gyro::UltimateGyroGetter<core::Angle<>, int64_t, double, nullptr_t>, public MPU6050 {
 protected:
     double gyroDivider = defaultGyroDivider;
     double accelerationDivider = defaultAccelerationDivider;
@@ -88,7 +88,7 @@ public:
     }
 };
 
-class GyroscopeCalculator : public GyroscopeBase, public gyro::UltimateGyroCalculator<double, size_t> {
+class GyroscopeCalculator : public GyroscopeBase, public gyro::UltimateGyroCalculator<core::Angle<>, int64_t> {
 public:
 
     core::Error calibrate() noexcept override {
@@ -205,16 +205,16 @@ public:
         return {};
     }
 
-    core::Result<double> getYaw() const noexcept override {
-        return ypr[0];
+    core::Result<core::Angle<>> getYaw() const noexcept override {
+        return core::Angle<>(ypr[0]);
     }
 
-    core::Result<double> getPitch() const noexcept override {
-        return ypr[1];
+    core::Result<core::Angle<>> getPitch() const noexcept override {
+        return core::Angle<>(ypr[1]);
     }
 
-    core::Result<double> getRoll() const noexcept override {
-        return ypr[2];
+    core::Result<core::Angle<>> getRoll() const noexcept override {
+        return core::Angle<>(ypr[2]);
     }
 
     core::Result<core::Vector<double>> getAcceleration() const noexcept override {

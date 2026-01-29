@@ -1,6 +1,7 @@
 #pragma once
 
 #include "containers.hpp"
+#include "abstract.hpp"
 
 namespace vislib::core {
 
@@ -36,7 +37,14 @@ public:
 
     Result(const T& v) noexcept(noexcept(T(v))) : value(v) { }
 
+    Result(T&& v) noexcept(noexcept(T(core::move(v)))) : value(core::move(v)) { }
+
     Result(const Error& e) noexcept : err(e) { }
+
+    Result(const Result&) = default;
+    Result(Result&&) = default;
+    Result& operator=(const Result&) = default;
+    Result& operator=(Result&&) = default;
 
     constexpr bool isError() const noexcept { return err.isError(); }
     constexpr bool isOk() const noexcept { return !err.isError(); }

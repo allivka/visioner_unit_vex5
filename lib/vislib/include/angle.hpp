@@ -42,11 +42,11 @@ public:
     
     Angle(const T& value) : value(fixDegrees(value)) {}
     
-    Angle() = default;
-    Angle(const Angle&) = default;
-    Angle(Angle&&) = default;
-    Angle& operator=(const Angle&) = default;
-    Angle& operator=(Angle&&) = default;
+    Angle() noexcept = default;
+    Angle(const Angle&) noexcept = default;
+    Angle(Angle&&) noexcept = default;
+    Angle& operator=(const Angle&) noexcept = default;
+    Angle& operator=(Angle&&) noexcept = default;
     ~Angle() = default;
     
     inline void setDegrees(const T& value) {
@@ -57,33 +57,28 @@ public:
         this->value = fixDegrees(rad2Deg(value));
     }
     
-    inline T degrees() {
+    inline T degrees() const noexcept {
         return value;
     }
     
-    inline T radians() {
+    inline T radians() const noexcept {
         return deg2Rad(value);
     }
     
-    inline T deg() {
+    inline T deg() const noexcept {
         return value;
     }
     
-    inline T rad() {
+    inline T rad() const noexcept {
         return deg2Rad(value);
     }
     
-    inline operator T() {
-        switch (castType) {
-            
-            case CastType::radians:
-                return deg2Rad(value);
-            
-            case CastType::degrees:
-            default:
-                return value;
-            
-        }
+    explicit inline operator T() const noexcept {
+        return (castType == CastType::radians) ? deg2Rad(value) : value;
+    }
+    
+    inline Angle operator-() const {
+        return Angle(fixDegrees(-value));
     }
     
     inline Angle& operator++() {
@@ -131,27 +126,25 @@ public:
         return *this;
     }
     
-    inline Angle operator+(const O& v) {
-        return Angle<T, O>(fixDegrees(value + v));
+    inline Angle operator+(const O& v) const {
+        return Angle(fixDegrees(value + v));
     }
     
-    inline Angle operator-(const O& v) {
-        return Angle<T, O>(fixDegrees(value - v));
+    inline Angle operator-(const O& v) const {
+        return Angle(fixDegrees(value - v));
     }
     
-    inline Angle operator*(const O& v) {
-        return Angle<T, O>(fixDegrees(value * v));
+    inline Angle operator*(const O& v) const {
+        return Angle(fixDegrees(value * v));
     }
     
-    inline Angle operator/(const O& v) {
-        return Angle<T, O>(fixDegrees(value / v));
+    inline Angle operator/(const O& v) const {
+        return Angle(fixDegrees(value / v));
     }
     
-    inline Angle operator%(const O& v) {
-        return Angle<T, O>(fixDegrees(fmod(static_cast<double>(value), static_cast<double>(v))));
+    inline Angle operator%(const O& v) const {
+        return Angle(fixDegrees(fmod(static_cast<double>(value), static_cast<double>(v))));
     }
-    
-    
     
     inline Angle& operator+=(const Angle& v) {
         value = fixDegrees(value + v.value);
@@ -178,35 +171,54 @@ public:
         return *this;
     }
     
-    inline Angle operator+(const Angle& v) {
-        return Angle<T, O>(fixDegrees(value + v.value));
+    inline Angle operator+(const Angle& v) const {
+        return Angle(fixDegrees(value + v.value));
     }
     
-    inline Angle operator-(const Angle& v) {
-        return Angle<T, O>(fixDegrees(value - v.value));
+    inline Angle operator-(const Angle& v) const {
+        return Angle(fixDegrees(value - v.value));
     }
     
-    inline Angle operator*(const Angle& v) {
-        return Angle<T, O>(fixDegrees(value * v.value));
+    inline Angle operator*(const Angle& v) const {
+        return Angle(fixDegrees(value * v.value));
     }
     
-    inline Angle operator/(const Angle& v) {
-        return Angle<T, O>(fixDegrees(value / v.value));
+    inline Angle operator/(const Angle& v) const {
+        return Angle(fixDegrees(value / v.value));
     }
     
-    inline Angle operator%(const Angle& v) {
-        return Angle<T, O>(fixDegrees(fmod(static_cast<double>(value), static_cast<double>(v.value))));
+    inline Angle operator%(const Angle& v) const {
+        return Angle(fixDegrees(fmod(static_cast<double>(value), static_cast<double>(v.value))));
     }
     
-    inline friend Angle  operator+(const O& v, const Angle<T, O>& a) {
+    inline friend Angle operator+(const O& v, const Angle& a) {
         return Angle(fixDegrees(a.value + v));
     }
     
-    inline friend Angle operator*(const O& v, const Angle<T, O>& a) {
+    inline friend Angle operator*(const O& v, const Angle& a) {
         return Angle(fixDegrees(a.value * v));
     }
-    
-};
 
+    inline bool operator==(const Angle& v) const noexcept { return value == v.value; }
+    inline bool operator!=(const Angle& v) const noexcept { return value != v.value; }
+    inline bool operator<(const Angle& v) const noexcept { return value < v.value; }
+    inline bool operator>(const Angle& v) const noexcept { return value > v.value; }
+    inline bool operator<=(const Angle& v) const noexcept { return value <= v.value; }
+    inline bool operator>=(const Angle& v) const noexcept { return value >= v.value; }
+
+    inline bool operator==(const O& v) const noexcept { return value == v; }
+    inline bool operator!=(const O& v) const noexcept { return value != v; }
+    inline bool operator<(const O& v) const noexcept { return value < v; }
+    inline bool operator>(const O& v) const noexcept { return value > v; }
+    inline bool operator<=(const O& v) const noexcept { return value <= v; }
+    inline bool operator>=(const O& v) const noexcept { return value >= v; }
+
+    inline friend bool operator==(const O& lhs, const Angle& rhs) noexcept { return lhs == rhs.value; }
+    inline friend bool operator!=(const O& lhs, const Angle& rhs) noexcept { return lhs != rhs.value; }
+    inline friend bool operator<(const O& lhs, const Angle& rhs) noexcept { return lhs < rhs.value; }
+    inline friend bool operator>(const O& lhs, const Angle& rhs) noexcept { return lhs > rhs.value; }
+    inline friend bool operator<=(const O& lhs, const Angle& rhs) noexcept { return lhs <= rhs.value; }
+    inline friend bool operator>=(const O& lhs, const Angle& rhs) noexcept { return lhs >= rhs.value; }
+};
 
 } //namespace vislib::core
