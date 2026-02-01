@@ -10,9 +10,9 @@ protected:
     core::TimeGetter<Time_t> timeGetter{};
     core::Angle<> headAngle{};
     
+    bool isSyncHeadWithDir = false;
     
 public:
-
     
     GyroPlatform(
         const calculators::GyroPidCalculator<Time_t>& calculator,
@@ -23,17 +23,31 @@ public:
         : calculator(calculator), yawGetter(core::move(yawGetter)), timeGetter(core::move(timeGetter)), Platform<Controller_t>(configuration, parallelismPrecision) {
             
     }
-
-    core::Error go(const double speed, const double angularSpeed = 0, const double speedK = 1) noexcept {
-
+    
+    
+    void setHead(const core::Angle<>& angle) noexcept {
+        headAngle = angle;
+    }
+    
+    core::Angle<> getHead() const noexcept {
+        return headAngle;
+    }
+    
+    core::Error go(const double speed, const core::Angle<>& angle, bool enableHeadSync = false, const double angularSpeed = 0, const double speedK = 1) noexcept {
+        
         auto time = timeGetter();
         
-        core::Result<core::Angle<>> angle = yawGetter->getYaw();
-        if(angle.isError()) return angle.error();
+        core::Result<core::Angle<>> yaw = yawGetter->getYaw();
+        if(yaw.isError()) return yaw.error();
+        
+        if(enableHeadSync) {
+            headAngle = angle;
+        }
         
         core::Result<PlatformMotorSpeeds> speeds = calculator.calculateSpeeds(
             time,
             angle,
+            yaw.Value(),
             headAngle,
             speed,
             speedK,
