@@ -158,7 +158,7 @@ namespace calculators {
 
 template<typename TimeType> class GyroPidCalculator {
 public:
-    PIDRegulator<double, TimeType>& pid;
+    PIDRegulator<core::Angle<>, TimeType>& pid;
     PlatformMotorConfig config;
 
     GyroPidCalculator(const PIDRegulator<TimeType>& pid, const PlatformMotorConfig& config) noexcept
@@ -166,8 +166,8 @@ public:
 
     core::Result<PlatformMotorSpeeds> calculateSpeeds(
         TimeType time,
-        const double dirAngle,
-        const double maintainAngle,
+        const core::Angle<> dirAngle,
+        const core::Angle<> maintainAngle,
         const motor::Speed& speed,
         const double angularSpeed = 0,
         const double speedK = 1
