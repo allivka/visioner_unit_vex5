@@ -173,7 +173,7 @@ public:
         const double speedK = 1
     ) noexcept {
         
-        return calculatePlatformSpeeds(config, dirAngle, speed, speedK, angularSpeed + pid.compute(mainTainAngle, time));
+        return calculatePlatformSpeeds(config, dirAngle, speed, speedK, angularSpeed + pid.compute(maintainAngle, time));
     }
 };
 
