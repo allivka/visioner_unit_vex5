@@ -21,9 +21,8 @@ public:
         const PlatformMotorConfig& configuration,
         size_t parallelismPrecision = 0) noexcept
         : calculator(calculator), yawGetter(core::move(yawGetter)), timeGetter(core::move(timeGetter)), Platform<Controller_t>(configuration, parallelismPrecision) {
-            
+        
     }
-    
     
     void setHead(const core::Angle<>& angle) noexcept {
         headAngle = angle;
@@ -33,7 +32,7 @@ public:
         return headAngle;
     }
     
-    core::Error go(const double speed, const core::Angle<>& angle, bool enableHeadSync = false, const double angularSpeed = 0, const double speedK = 1) noexcept {
+    core::Error go(const double speed, const core::Angle<>& angle, bool isAngleRelative = false,  bool enableHeadSync = false, const double angularSpeed = 0, const double speedK = 1) noexcept {
         
         auto time = timeGetter();
         
@@ -46,13 +45,14 @@ public:
         
         core::Result<PlatformMotorSpeeds> speeds = calculator.calculateSpeeds(
             time,
-            angle,
+            isAngleRelative ? yaw() - angle : angle,
             yaw.Value(),
             headAngle,
             speed,
             speedK,
             angularSpeed
         );
+        
         if (speeds.isError()) return speeds.error();
         
         core::Error err = this->setSpeeds(speeds());
