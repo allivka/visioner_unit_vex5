@@ -13,4 +13,8 @@ vislib::core::IncrementTimer<int64_t> Visioner::timer([]() -> vislib::core::Resu
         return static_cast<int64_t>(millis());
 });
 
+vislib::binds::mpu6050::GyroscopeDMP<0> Visioner::mpu;
+
+vislib::core::UniquePtr<vislib::platform::GyroPlatform<vislib::binds::vex5::motor::V5MotorController, int64_t>> Visioner::platform{nullptr};
+
 }

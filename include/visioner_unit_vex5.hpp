@@ -5,29 +5,29 @@
 
 namespace VisionerUnitVex5 {
 
-vislib::motor::SpeedRange rpmSpeedRange(-600, 600);
-vislib::motor::SpeedRange motorUseSpeedRange(-1500, 1500);
-vislib::motor::SpeedRange motorInterfaceAngularSpeedRange(motorUseSpeedRange.mapValueToRange(-1500, rpmSpeedRange) * 2 * PI, motorUseSpeedRange.mapValueToRange(1500, rpmSpeedRange) * 2 * PI);
+static vislib::motor::SpeedRange rpmSpeedRange(-600, 600);
+static vislib::motor::SpeedRange motorUseSpeedRange(-1500, 1500);
+static vislib::motor::SpeedRange motorInterfaceAngularSpeedRange(motorUseSpeedRange.mapValueToRange(-1500, rpmSpeedRange) * 2 * PI, motorUseSpeedRange.mapValueToRange(1500, rpmSpeedRange) * 2 * PI);
 
-double wheelR = 0.1;
-double motorDistance = 0.3;
+static constexpr double wheelR = 0.1;
+static constexpr double motorDistance = 0.3;
 
-vislib::binds::arduino::port_t mpuInterruptPort = 2;
+static constexpr vislib::binds::arduino::port_t mpuInterruptPort = 2;
 
-double PID_K_P = 1;
-double PID_K_I = 0.1;
-double PID_K_D = 0.3;
+static constexpr double PID_K_P = 1;
+static constexpr double PID_K_I = 0.1;
+static constexpr double PID_K_D = 0.3;
 
 struct VisionerBehaviour {
-    double speed{};
-    vislib::core::Angle<> angleToMaintain{};
-    bool isHeadRelative = false;
-    bool enableHeadSync = false;
-    double rotationSpeed{};
-    double speedK = 1;
+    double speed;
+    vislib::core::Angle<> angleToMaintain;
+    bool isHeadRelative;
+    bool enableHeadSync;
+    double rotationSpeed;
+    double speedK;
 };
 
-class Visioner : vislib::gyro::YawGetter<vislib::core::Angle<>> {
+class Visioner : public vislib::gyro::YawGetter<vislib::core::Angle<>> {
 private:
 
     static vislib::platform::PlatformMotorConfig platformConfig;
@@ -36,7 +36,7 @@ private:
     
     static vislib::core::IncrementTimer<int64_t> timer;
     
-    static vislib::platform::GyroPlatform<vislib::binds::vex5::motor::V5MotorController, int64_t> platform;
+    static vislib::core::UniquePtr<vislib::platform::GyroPlatform<vislib::binds::vex5::motor::V5MotorController, int64_t>> platform;
     
     struct YawGetter : public vislib::gyro::YawGetter<vislib::core::Angle<>>{
     private:
@@ -62,7 +62,7 @@ public:
 
         vislib::core::TimeGetter<int64_t> timeGetter = []() -> vislib::core::Result<int64_t> { return timer.getTime(); };
 
-        platform = vislib::platform::GyroPlatform<vislib::binds::vex5::motor::V5MotorController, int64_t>(
+        platform.reset(new vislib::platform::GyroPlatform<vislib::binds::vex5::motor::V5MotorController, int64_t>(
             vislib::platform::calculators::GyroPidCalculator<int64_t>(
                 vislib::PIDRegulator<double, int64_t>(
                     PID_K_P,
@@ -74,7 +74,7 @@ public:
             yawGetterPtr,
             timeGetter,
             platformConfig
-        );
+        ));
         
         auto e = timer.start();
         
@@ -104,7 +104,7 @@ public:
         printer("Initialized platform controller shield\n\n");
         
         printer("Initializing platform controller");
-        er = platform.init(vislib::core::Array<VEX5_PORT_t>({(VEX5_PORT_t)1, (VEX5_PORT_t)2, (VEX5_PORT_t)3, (VEX5_PORT_t)4}));
+        er = platform->init(vislib::core::Array<VEX5_PORT_t>({(VEX5_PORT_t)1, (VEX5_PORT_t)2, (VEX5_PORT_t)3, (VEX5_PORT_t)4}));
         
         printer("Initialized platform controller");
         
@@ -133,7 +133,7 @@ public:
         
         if (shouldSetBehaviour) this->setBehaviour(behaviour);
         
-        static auto err = platform.go(
+        static auto err = platform->go(
             this->behaviour.speed,
             this->behaviour.angleToMaintain,
             this->behaviour.isHeadRelative,
