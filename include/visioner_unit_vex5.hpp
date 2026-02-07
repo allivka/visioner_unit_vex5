@@ -24,7 +24,7 @@ struct Buffer {
     
 };
 
-#define DEF(field) FABRICATE_SETTER(VisionerBehaviour, field)
+#define DEF(field) FABRICATE_FIELD(VisionerBehaviour, field)
 
 struct VisionerBehaviour {
     vislib::core::Angle<> angleToMaintain{};
