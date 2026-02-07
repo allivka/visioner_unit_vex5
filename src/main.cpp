@@ -11,13 +11,14 @@ void setup() {
     Serial.begin(115200);
     
     visioner.setup();
-    visioner.setBehaviour(VisionerUnitVex5::VisionerBehaviour{.speed = 0});
+    
+    visioner.setBehaviour(VisionerUnitVex5::VisionerBehaviour{}.set_speed(1000));
     
     digitalWrite(LED_BUILTIN, HIGH);
     delay(500);
     
 }
 
-void loop() {      
+void loop() {
     visioner.go();
 }
