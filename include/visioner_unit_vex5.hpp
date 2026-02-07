@@ -24,9 +24,7 @@ struct Buffer {
     
 };
 
-#define FABRICATOR(base, field) base& set_ ## field(const decltype(field)& param) {this->field = param; return *this;}
-
-#define VB_FABRICATOR(field) FABRICATOR(VisionerBehaviour, field)
+#define DEF(field) FABRICATE_SETTER(VisionerBehaviour, field)
 
 struct VisionerBehaviour {
     vislib::core::Angle<> angleToMaintain{};
@@ -79,16 +77,16 @@ struct VisionerBehaviour {
         return *this;
     }
     
-    VB_FABRICATOR(angleToMaintain)
-    VB_FABRICATOR(speed)
-    VB_FABRICATOR(rotationSpeed)
-    VB_FABRICATOR(speedK)
-    VB_FABRICATOR(isHeadRelative)
-    VB_FABRICATOR(enableHeadSync)
+    DEF(angleToMaintain)
+    DEF(speed)
+    DEF(rotationSpeed)
+    DEF(speedK)
+    DEF(isHeadRelative)
+    DEF(enableHeadSync)
     
 };
 
-#undef VB_FABRICATOR
+#undef DEF
 
 class Visioner : public vislib::gyro::YawGetter<vislib::core::Angle<>> {
 private:
