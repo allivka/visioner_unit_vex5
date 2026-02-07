@@ -1,4 +1,4 @@
-#include "visioner.hpp"
+#include "visioner_unit_vex5.hpp"
 #include <stdio.h>
 #include <Wire.h>
 
@@ -29,8 +29,6 @@ core::IncrementTimer<int64_t> timer([]() -> core::Result<int64_t> {
 });
 
 char *str;
-
-binds::vex5::motor::V5MotorController motor1(motor::MotorInfo(0, motorDistance, wheelR, motorUseSpeedRange, motorInterfaceAngularSpeedRange));
 
 void setup() {
     
@@ -77,16 +75,13 @@ void setup() {
     delay(100);
     
     Serial.println("Initializing platform controller shield");
-    Vex5.begin();
-    motor1.init(VEX5_PORT_3);
-    
+    Vex5.begin();    
     
     Serial.println("Initialized platform controller shield\n\n");
     delay(100);
     
     Serial.println("Initializing platform controller");
     er = plat.init(core::Array<VEX5_PORT_t>({(VEX5_PORT_t)1, (VEX5_PORT_t)2, (VEX5_PORT_t)3, (VEX5_PORT_t)4}));
-    // if (er) while (true) Serial.println(er.msg.c_str());
     
     Serial.println("Initialized platform controller");
     delay(100);
@@ -123,10 +118,6 @@ double speed = 1000;
 ull_t sectionTime = 1000;
 
 void loop() {      
-    // motor1.setSpeed(2000);
-    // delay(sectionTime);
-    // motor1.setSpeed(-2000);
-    // delay(sectionTime);
     
     move(0, speed, sectionTime);
     move(45, speed, sectionTime);
