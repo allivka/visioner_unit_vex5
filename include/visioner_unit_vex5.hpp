@@ -18,13 +18,63 @@ static constexpr double PID_K_P = 1;
 static constexpr double PID_K_I = 0.1;
 static constexpr double PID_K_D = 0.3;
 
+struct Buffer {
+    vislib::core::UniquePtr<char> data{};
+    int64_t size{};
+    
+};
+
 struct VisionerBehaviour {
-    double speed;
     vislib::core::Angle<> angleToMaintain;
-    bool isHeadRelative;
-    bool enableHeadSync;
+    double speed;
     double rotationSpeed;
     double speedK;
+    bool isHeadRelative;
+    bool enableHeadSync;
+    
+    Buffer serialize() const {
+        Buffer buff;
+        buff.data = vislib::core::UniquePtr<char>(reinterpret_cast<char*>(malloc(sizeof(VisionerBehaviour))));
+        buff.size = sizeof(double) * 4 + sizeof(bool) * 2;
+        
+        double *dp = reinterpret_cast<double*>(buff.data.get());
+        *dp = angleToMaintain.deg();
+        dp++;
+        *dp = speed;
+        dp++;
+        *dp = rotationSpeed;
+        dp++;
+        *dp = speedK;
+        dp++;
+        
+        bool *bp = reinterpret_cast<bool*>(dp);
+        *bp = isHeadRelative;
+        bp++;
+        *bp = enableHeadSync;
+        
+        return vislib::core::move(buff);
+        
+    }
+    
+    VisionerBehaviour& deserialize(const Buffer& buff) {
+        double *dp = reinterpret_cast<double*>(buff.data.get());
+        angleToMaintain.setDegrees(*dp);
+        dp++;
+        speed = *dp;
+        dp++;
+        rotationSpeed = *dp;
+        dp++;
+        speedK = *dp;
+        dp++;
+        
+        bool *bp = reinterpret_cast<bool*>(dp);
+        isHeadRelative = *bp;
+        bp++;
+        enableHeadSync = *bp;
+        
+        return *this;
+    }
+    
 };
 
 class Visioner : public vislib::gyro::YawGetter<vislib::core::Angle<>> {
