@@ -28,7 +28,7 @@ core::IncrementTimer<int64_t> timer([]() -> core::Result<int64_t> {
     return static_cast<int64_t>(millis());
 });
 
-char *str;
+VisionerUnitVex5::Visioner visioner;
 
 void setup() {
     
@@ -36,58 +36,9 @@ void setup() {
     
     str = static_cast<char*>(malloc(500));
     
-    Serial.begin(9600);
-    delay(100);
-    // Serial.println(motorInterfaceAngularSpeedRange.lowest);
-    // Serial.println(motorInterfaceAngularSpeedRange.highest);
-
-    Serial.println("Initialized serial\n\nInitializing timer");
+    Serial.begin(115200);
     
-    auto e = timer.start();
-    
-    
-    if (e) while (true) Serial.println(String("Failed to initialize timer: ") + String(e.error().msg.c_str()));
-
-    delay(100);
-
-    Serial.println("Initialized timer\n\nInitializing I2C protocol");
-
-    Wire.begin();
-    delay(100);
-
-    Serial.println("Initialized I2C protocol\n\nInitializing MPU6050");
-
-    mpu.initialize();
-
-    Serial.println("Initialized MPU6050\n\nTesting MPU6050 connection");
-    delay(100);
-
-    if(!mpu.testConnection()) while(true) Serial.println("MPU6050 connection failed");
-
-    Serial.println("Initialized MPU6050\n\nInitializing MPU6050 DMP");
-    delay(100);
-
-
-    auto er = mpu.initDMP(mpuInterruptPort);
-    if (er) while (true) Serial.println(er.msg.c_str());
-
-    Serial.println("Initialized MPU6050 DMP\n\n");
-    delay(100);
-    
-    Serial.println("Initializing platform controller shield");
-    Vex5.begin();    
-    
-    Serial.println("Initialized platform controller shield\n\n");
-    delay(100);
-    
-    Serial.println("Initializing platform controller");
-    er = plat.init(core::Array<VEX5_PORT_t>({(VEX5_PORT_t)1, (VEX5_PORT_t)2, (VEX5_PORT_t)3, (VEX5_PORT_t)4}));
-    
-    Serial.println("Initialized platform controller");
-    delay(100);
-    
-    Serial.println("\nDone initialization");
-    
+    visioner.setup();
     
     digitalWrite(LED_BUILTIN, HIGH);
     delay(500);
@@ -119,38 +70,10 @@ ull_t sectionTime = 1000;
 
 void loop() {      
     
-    move(0, speed, sectionTime);
-    move(45, speed, sectionTime);
-    move(90, speed, sectionTime);
-    move(135, speed, sectionTime);
-    move(180, speed, sectionTime);
-    move(-135, speed, sectionTime);
-    move(-90, speed, sectionTime);
-    move(-45, speed, sectionTime);
     
-//     const auto info = mpu.getGyroData();
-
-//     if (info) {
-//         sprintf(str, "Shit happened: %s\n", info.error().msg.c_str());
-//         goto usual;
-//     }
-
-//     sprintf(str, "[%d %d ms]: speedX = %s;\t speedY = %s;\t speedZ = %s;\t yaw = %s;\t pitch = %s;\t roll = %s\n",
-//         static_cast<size_t>(timer.getTime()() / 1000),
-//         static_cast<size_t>(timer.getTime()() % 1000),
-//         String(int(info().speed[0])).c_str(),
-//         String(int(info().speed[1])).c_str(),
-//         String(int(info().speed[2])).c_str(),
-//         String(int(info().ypr.yaw)).c_str(),
-//         String(int(info().ypr.pitch)).c_str(),
-//         String(int(info().ypr.roll)).c_str()
-//     );
 
 
-// usual:
-//     ++timer;
-//     mpu.update(nullptr);
-
-//     Serial.print(str);
+    ++timer;
+    mpu.update(nullptr);
 
 }

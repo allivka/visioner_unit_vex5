@@ -5,20 +5,29 @@
 
 namespace VisionerUnitVex5 {
 
-const vislib::motor::SpeedRange rpmSpeedRange(-600, 600);
-const vislib::motor::SpeedRange motorUseSpeedRange(-1500, 1500);
-const vislib::motor::SpeedRange motorInterfaceAngularSpeedRange(motorUseSpeedRange.mapValueToRange(-1500, rpmSpeedRange) * 2 * PI, motorUseSpeedRange.mapValueToRange(1500, rpmSpeedRange) * 2 * PI);
+vislib::motor::SpeedRange rpmSpeedRange(-600, 600);
+vislib::motor::SpeedRange motorUseSpeedRange(-1500, 1500);
+vislib::motor::SpeedRange motorInterfaceAngularSpeedRange(motorUseSpeedRange.mapValueToRange(-1500, rpmSpeedRange) * 2 * PI, motorUseSpeedRange.mapValueToRange(1500, rpmSpeedRange) * 2 * PI);
 
-constexpr double wheelR = 0.1;
-constexpr double motorDistance = 0.3;
+double wheelR = 0.1;
+double motorDistance = 0.3;
 
-constexpr vislib::binds::arduino::port_t mpuInterruptPort = 2;
+vislib::binds::arduino::port_t mpuInterruptPort = 2;
 
-constexpr double PID_K_P = 1;
-constexpr double PID_K_I = 0.1;
-constexpr double PID_K_D = 0.3;
+double PID_K_P = 1;
+double PID_K_I = 0.1;
+double PID_K_D = 0.3;
 
-class Visioner {
+struct VisionerBehaviour {
+    double speed{};
+    vislib::core::Angle<> angleToMaintain{};
+    bool isHeadRelative = false;
+    bool enableHeadSync = false;
+    double rotationSpeed{};
+    double speedK = 1;
+};
+
+class Visioner : vislib::gyro::YawGetter<vislib::core::Angle<>> {
 private:
 
     static vislib::platform::PlatformMotorConfig platformConfig;
@@ -42,6 +51,8 @@ private:
     };
     
     vislib::core::UniquePtr<vislib::gyro::YawGetter<vislib::core::Angle<>>> yawGetterPtr{nullptr};
+    
+    VisionerBehaviour behaviour{};
     
 public:
 
@@ -68,23 +79,23 @@ public:
         auto e = timer.start();
         
         if (e) while (true) printer((String("Failed to initialize timer: ") + String(e.error().msg.c_str())).c_str());
-
+        
         printer("Initialized timer\n\nInitializing I2C protocol");
-
+        
         Wire.begin();
         printer("Initialized I2C protocol\n\nInitializing MPU6050");
-
+        
         mpu.initialize();
-
+        
         printer("Initialized MPU6050\n\nTesting MPU6050 connection");
-
+        
         if(!mpu.testConnection()) while(true) printer("MPU6050 connection failed");
-
+        
         printer("Initialized MPU6050\n\nInitializing MPU6050 DMP");
-
+        
         auto er = mpu.initDMP(mpuInterruptPort);
         if (er) while (true) printer(er.msg.c_str());
-
+        
         printer("Initialized MPU6050 DMP\n\n");
         
         printer("Initializing platform controller shield");
@@ -98,6 +109,42 @@ public:
         printer("Initialized platform controller");
         
         printer("\nDone initialization");
+    }
+    
+    inline vislib::core::Result<vislib::core::Angle<>> getYaw() const override {
+        return mpu.getYaw();
+    }
+    
+    inline void setBehaviour(const VisionerBehaviour& behaviour) {
+        this->behaviour = behaviour;
+    }
+    
+    inline vislib::core::Error update() {
+        ++timer;
+        static auto err = mpu.update(nullptr);
+        
+        if(err.isError()) return err;
+        
+        return {};
+    }
+    
+    vislib::core::Error go(bool shouldUpdate = true, bool shouldSetBehaviour = false, const VisionerBehaviour& behaviour = VisionerBehaviour{}) {
+        if (shouldUpdate) this->update();
+        
+        if (shouldSetBehaviour) this->setBehaviour(behaviour);
+        
+        static auto err = platform.go(
+            this->behaviour.speed,
+            this->behaviour.angleToMaintain,
+            this->behaviour.isHeadRelative,
+            this->behaviour.enableHeadSync,
+            this->behaviour.rotationSpeed,
+            this->behaviour.speedK
+        );
+        
+        if (err.isError()) return err;
+        
+        return {};
     }
 
 };
