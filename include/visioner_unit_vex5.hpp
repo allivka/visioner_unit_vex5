@@ -34,10 +34,12 @@ struct VisionerBehaviour {
     bool isHeadRelative{};
     bool enableHeadSync{};
     
+    static const int packetSize = sizeof(double) * 4 + sizeof(bool) * 2;
+    
     Buffer serialize() const {
         Buffer buff;
         buff.data = vislib::core::UniquePtr<char>(reinterpret_cast<char*>(malloc(sizeof(VisionerBehaviour))));
-        buff.size = sizeof(double) * 4 + sizeof(bool) * 2;
+        buff.size = packetSize;
         
         double *dp = reinterpret_cast<double*>(buff.data.get());
         *dp = angleToMaintain.deg();
