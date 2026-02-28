@@ -1,41 +1,17 @@
+#include "config.hpp"
 #include "visioner_unit_vex5.hpp"
 #include <stdio.h>
 #include <Wire.h>
 
 VisionerUnitVex5::Visioner visioner;
+using VisionerUnitVex5::Buffer;
+using VisionerUnitVex5::VisionerBehaviour;
 
-struct SerialBuffer {
-    char buffer[VisionerUnitVex5::VisionerBehaviour::packetSize] = {};
-    int8_t counter = 0;
-    
-    bool process() {
-        int byte = Serial.read();
-        
-        if (byte == -1) return false;
-        
-        buffer[counter++] = (char)byte;
-        
-        if (counter == VisionerUnitVex5::VisionerBehaviour::packetSize) return true;
-        
-        return false;
-    }
-    
-    void reset() {
-        counter = 0;
-    }
-    
-    VisionerUnitVex5::VisionerBehaviour get() {
-        VisionerUnitVex5::Buffer buff;
-        buff.size = counter;
-        buff.data = vislib::core::UniquePtr<char>(buffer);
-        
-        return VisionerUnitVex5::VisionerBehaviour().deserialize(buff);
-    }
-};
-
-SerialBuffer serialBus;
+int last;
 
 void setup() {
+    
+    last = millis();
     
     pinMode(LED_BUILTIN, OUTPUT);
     
@@ -51,13 +27,10 @@ void setup() {
     
 }
 
+
 void loop() {
-    visioner.go();
     
-    if(serialBus.process()) {
-        visioner.setBehaviour(serialBus.get());
-        serialBus.reset();
-    }
+    visioner.go();
     
     auto yaw = visioner.getYaw();
     
@@ -65,5 +38,20 @@ void loop() {
     
     double angle = yaw().deg();
     
-    Serial.write((char*)&angle, 8);
+    Serial.write((char*)&angle, sizeof(double));
+    
+    if(max(millis() - last, millis()) < 1000 / UART_HZ) return;
+    
+    Buffer buff;
+    buff.data = vislib::core::UniquePtr<char>((char*)malloc(VisionerBehaviour::packetSize));
+    buff.size = VisionerBehaviour::packetSize;
+    
+    Serial.readBytes(buff.data.get(), VisionerBehaviour::packetSize);
+    
+    VisionerBehaviour beh;
+    beh.deserialize(buff);
+    
+    visioner.setBehaviour(beh);
+    
+    last = millis();
 }
