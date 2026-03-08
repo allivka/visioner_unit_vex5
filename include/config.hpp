@@ -1,3 +1,4 @@
 #pragma once
 
-#define UART_HZ 50
+#define IN_HZ 50
+#define OUT_HZ 10

@@ -7,11 +7,13 @@ VisionerUnitVex5::Visioner visioner;
 using VisionerUnitVex5::Buffer;
 using VisionerUnitVex5::VisionerBehaviour;
 
-int last;
+int last_in;
+int last_out;
 
 void setup() {
     
-    last = millis();
+    last_in = millis();
+    last_out = last_in;
     
     pinMode(LED_BUILTIN, OUTPUT);
     
@@ -32,15 +34,19 @@ void loop() {
     
     visioner.go();
     
-    auto yaw = visioner.getYaw();
+    if (max(millis() - int(last_out), millis()) < 1000 / OUT_HZ) {
     
-    if (yaw.isError()) return;
+        auto yaw = visioner.getYaw();
+        
+        if (yaw.isError()) return;
+        
+        double angle = yaw().deg();
+        
+        Serial.write((char*)&angle, sizeof(double));
+        last_out = millis();
+    }
     
-    double angle = yaw().deg();
-    
-    Serial.write((char*)&angle, sizeof(double));
-    
-    if(max(millis() - last, millis()) < 1000 / UART_HZ) return;
+    if(max(millis() - int(last_in), millis()) < 1000 / IN_HZ) return;
     
     Buffer buff;
     buff.data = vislib::core::UniquePtr<char>((char*)malloc(VisionerBehaviour::packetSize));
@@ -53,5 +59,5 @@ void loop() {
     
     visioner.setBehaviour(beh);
     
-    last = millis();
+    last_in = millis();
 }
