@@ -27,14 +27,13 @@ struct Buffer {
 #define DEF(field) FABRICATE_FIELD(VisionerBehaviour, field)
 
 struct VisionerBehaviour {
-    vislib::core::Angle<> angleToMaintain{};
+    vislib::core::Angle<> viewAngle{};
+    vislib::core::Angle<> motionAngle{};
     double speed{};
-    double rotationSpeed{};
     double speedK = 1;
-    bool isHeadRelative{};
     bool enableHeadSync{};
     
-    static const int packetSize = sizeof(double) * 4 + sizeof(bool) * 2;
+    static const int packetSize = sizeof(double) * 4 + sizeof(bool) * 1;
     
     Buffer serialize() const {
         Buffer buff;
@@ -42,18 +41,16 @@ struct VisionerBehaviour {
         buff.size = packetSize;
         
         double *dp = reinterpret_cast<double*>(buff.data.get());
-        *dp = angleToMaintain.deg();
+        *dp = viewAngle.deg();
+        dp++;
+        *dp = motionAngle.deg();
         dp++;
         *dp = speed;
-        dp++;
-        *dp = rotationSpeed;
         dp++;
         *dp = speedK;
         dp++;
         
         bool *bp = reinterpret_cast<bool*>(dp);
-        *bp = isHeadRelative;
-        bp++;
         *bp = enableHeadSync;
         
         return vislib::core::move(buff);
@@ -62,28 +59,25 @@ struct VisionerBehaviour {
     
     VisionerBehaviour& deserialize(const Buffer& buff) {
         double *dp = reinterpret_cast<double*>(buff.data.get());
-        angleToMaintain.setDegrees(*dp);
+        viewAngle.setDegrees(*dp);
+        dp++;
+        motionAngle.setDegrees(*dp);
         dp++;
         speed = *dp;
-        dp++;
-        rotationSpeed = *dp;
         dp++;
         speedK = *dp;
         dp++;
         
         bool *bp = reinterpret_cast<bool*>(dp);
-        isHeadRelative = *bp;
-        bp++;
         enableHeadSync = *bp;
         
         return *this;
     }
     
-    DEF(angleToMaintain)
+    DEF(viewAngle)
     DEF(speed)
-    DEF(rotationSpeed)
+    DEF(motionAngle)
     DEF(speedK)
-    DEF(isHeadRelative)
     DEF(enableHeadSync)
     
 };
@@ -198,10 +192,10 @@ public:
         
         static auto err = platform->go(
             this->behaviour.speed,
-            this->behaviour.angleToMaintain,
-            this->behaviour.isHeadRelative,
+            this->behaviour.motionAngle,            
+            this->behaviour.viewAngle,
             this->behaviour.enableHeadSync,
-            this->behaviour.rotationSpeed,
+            0,
             this->behaviour.speedK
         );
         
