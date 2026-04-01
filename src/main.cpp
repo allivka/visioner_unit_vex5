@@ -1,63 +1,84 @@
-#include "config.hpp"
-#include "visioner_unit_vex5.hpp"
-#include <stdio.h>
-#include <Wire.h>
+#include "I2Cdev.h"
+#include "MPU6050_6Axis_MotionApps20.h"
+#include "Wire.h"
 
-VisionerUnitVex5::Visioner visioner;
-using VisionerUnitVex5::Buffer;
-using VisionerUnitVex5::VisionerBehaviour;
+MPU6050 mpu;
 
-int last_in;
-int last_out;
+uint8_t fifoBuffer[64];
+Quaternion q;
+VectorFloat gravity;
+float ypr[3];
 
-void setup() {
-    
-    last_in = millis();
-    last_out = last_in;
-    
-    pinMode(LED_BUILTIN, OUTPUT);
-    
-    Serial.begin(115200);
-    Serial.setTimeout(1000);
-    
-    visioner.setup();
-    
-    visioner.setBehaviour(VisionerUnitVex5::VisionerBehaviour{}.set_speed(1000));
-    
-    digitalWrite(LED_BUILTIN, HIGH);
-    delay(500);
-    
+float filteredYaw = 0;
+float filterAlpha = 0.05;
+unsigned long lastResetTime = 0;
+unsigned long lastPrintTime = 0;
+volatile bool dataReady = false;
+
+void interruptHandler() {
+    dataReady = true;
 }
 
-
-void loop() {
+void setup() {
+    Wire.begin();
+    Wire.setClock(400000);
     
-    visioner.go();
+    Serial.begin(115200);
+    while (!Serial);
     
-    if (max(millis() - int(last_out), millis()) < 1000 / OUT_HZ) {
+    mpu.initialize();
+    pinMode(3, INPUT);
     
-        auto yaw = visioner.getYaw();
-        
-        if (yaw.isError()) return;
-        
-        double angle = yaw().deg();
-        
-        Serial.write((char*)&angle, sizeof(double));
-        last_out = millis();
+    if (!mpu.testConnection()) {
+        Serial.println("MPU6050 connection failed");
+        while(1);
     }
     
-    if(max(millis() - int(last_in), millis()) < 1000 / IN_HZ) return;
+    if (mpu.dmpInitialize() != 0) {
+        Serial.println("DMP init failed");
+        while(1);
+    }
     
-    Buffer buff;
-    buff.data = vislib::core::UniquePtr<char>((char*)malloc(VisionerBehaviour::packetSize));
-    buff.size = VisionerBehaviour::packetSize;
+    mpu.setXGyroOffset(220);
+    mpu.setYGyroOffset(76);
+    mpu.setZGyroOffset(-85);
+    mpu.setZAccelOffset(1788);
     
-    Serial.readBytes(buff.data.get(), VisionerBehaviour::packetSize);
+    mpu.setDMPEnabled(true);
+    attachInterrupt(digitalPinToInterrupt(3), interruptHandler, RISING);
     
-    VisionerBehaviour beh;
-    beh.deserialize(buff);
+    Serial.println("Ready");
+    lastResetTime = millis();
+}
+
+void loop() {
+    if (!dataReady) return;
     
-    visioner.setBehaviour(beh);
+    dataReady = false;
+    uint16_t fifoCount = mpu.getFIFOCount();
+    uint8_t intStatus = mpu.getIntStatus();
     
-    last_in = millis();
+    if ((intStatus & 0x10) || fifoCount >= 1024) {
+        mpu.resetFIFO();
+    } else if (intStatus & 0x02 && fifoCount >= mpu.dmpGetFIFOPacketSize()) {
+        mpu.getFIFOBytes(fifoBuffer, mpu.dmpGetFIFOPacketSize());
+        fifoCount -= mpu.dmpGetFIFOPacketSize();
+        
+        mpu.dmpGetQuaternion(&q, fifoBuffer);
+        mpu.dmpGetGravity(&gravity, &q);
+        mpu.dmpGetYawPitchRoll(ypr, &q, &gravity);
+        
+        float rawYaw = ypr[0] * 180 / M_PI;
+        filteredYaw = filterAlpha * rawYaw + (1 - filterAlpha) * filteredYaw;
+    }
+    
+    if (millis() - lastPrintTime >= 100) {
+        Serial.println(filteredYaw - 60);
+        lastPrintTime = millis();
+    }
+    
+    if (millis() - lastResetTime >= 60000) {
+        mpu.resetFIFO();
+        lastResetTime = millis();
+    }
 }

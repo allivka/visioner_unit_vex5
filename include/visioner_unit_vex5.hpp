@@ -85,7 +85,7 @@ struct VisionerBehaviour {
 #undef DEF
 
 class Visioner : public vislib::gyro::YawGetter<vislib::core::Angle<>> {
-private:
+public:
 
     static vislib::platform::PlatformMotorConfig platformConfig;
     
